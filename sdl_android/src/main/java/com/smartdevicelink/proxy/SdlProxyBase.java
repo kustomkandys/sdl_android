@@ -317,11 +317,62 @@ public abstract class SdlProxyBase<proxyListenerType extends IProxyListenerBase>
 			SdlProxyBase.this.addOnRPCNotificationListener(notificationId,listener);
 		}
 
+
+		// START ADDITIONS
+
 		@Override
 		public boolean removeOnRPCNotificationListener(FunctionID notificationId, OnRPCNotificationListener listener) {
-			return SdlProxyBase.this.removeOnRPCNotificationListener(notificationId,listener);
+			return proxy.removeOnRPCNotificationListener(notificationId,listener);
 		}
+
+		@Override
+		public Object getCapability(SystemCapabilityType systemCapabilityType){
+			return proxy.getCapability(systemCapabilityType);
+		}
+
+		@Override
+		public void getCapability(SystemCapabilityType systemCapabilityType, OnSystemCapabilityListener scListener) {
+			proxy.getCapability(systemCapabilityType, scListener);
+		}
+
+		@Override
+		public SdlMsgVersion getSdlMsgVersion(){
+			return proxy.getSdlMsgVersion();
+		}
+
+		@Override
+		public boolean isCapabilitySupported(SystemCapabilityType systemCapabilityType){
+			return proxy.isCapabilitySupported(systemCapabilityType);
+		}
+
+		@Override
+		public void startAudioService(boolean isEncrypted, AudioStreamingCodec codec,
+									  AudioStreamingParams params) {
+			if(proxy.getIsConnected()){
+				proxy.startAudioStream(isEncrypted, codec, params);
+			}
+		}
+
+		@Override
+		public IVideoStreamListener startVideoStream(boolean isEncrypted, VideoStreamingParameters parameters){
+			return proxy.startVideoStream(isEncrypted, parameters);
+		}
+
+		@Override
+		public IAudioStreamListener startAudioStream(boolean isEncrypted, AudioStreamingCodec codec,
+													 AudioStreamingParams params) {
+			return proxy.startAudioStream(isEncrypted, codec, params);
+		}
+
+		// END ADDITIONS
 	};
+
+	public SdlProxyBase(proxyListenerType listener, String appName, Boolean isMediaApp, Language languageDesired, Language hmiDisplayLanguageDesired, Vector<AppHMIType> appType, String appID,
+						BaseTransportConfig transportConfig) throws SdlException {
+		performBaseCommon(listener, null, true, appName, null, null, null, isMediaApp,
+				null, languageDesired, hmiDisplayLanguageDesired, appType, appID, null, false, null, null, null, transportConfig);
+
+	}
 	
 	private void notifyPutFileStreamError(Exception e, String info)
 	{
