@@ -333,7 +333,12 @@ public class SdlManager implements ProxyBridge.LifecycleListener {
 
 		@Override
 		public SdlMsgVersion getSdlMsgVersion(){
-			return proxy.getSdlMsgVersion();
+			try {
+				return proxy.getSdlMsgVersion();
+			} catch (SdlException e) {
+				e.printStackTrace();
+			}
+			return null;
 		}
 	};
 

@@ -330,7 +330,12 @@ public abstract class SdlProxyBase<proxyListenerType extends IProxyListenerBase>
 
 		@Override
 		public SdlMsgVersion getSdlMsgVersion(){
-			return SdlProxyBase.this.getSdlMsgVersion();
+			try {
+				return SdlProxyBase.this.getSdlMsgVersion();
+			} catch (SdlException e) {
+				e.printStackTrace();
+			}
+			return null;
 		}
 
 		@Override
@@ -3474,7 +3479,7 @@ public abstract class SdlProxyBase<proxyListenerType extends IProxyListenerBase>
 		SdlTrace.logProxyEvent("Proxy received RPC Message: " + functionName, SDL_LIB_TRACE_KEY);
 	}
 
-	public SdlMsgVersion getSdlMsgVersion(){
+	public SdlMsgVersion getSdlMsgVersion() throws SdlException{
 		return _sdlMsgVersion;
 	}
 
