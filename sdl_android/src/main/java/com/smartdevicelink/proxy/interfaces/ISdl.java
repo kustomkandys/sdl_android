@@ -1,9 +1,15 @@
 package com.smartdevicelink.proxy.interfaces;
 
+import android.content.Context;
+
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.protocol.enums.SessionType;
 import com.smartdevicelink.proxy.RPCRequest;
+import com.smartdevicelink.proxy.rpc.SdlMsgVersion;
+import com.smartdevicelink.proxy.rpc.enums.SystemCapabilityType;
 import com.smartdevicelink.proxy.rpc.listeners.OnRPCNotificationListener;
+import com.smartdevicelink.streaming.audio.AudioStreamingCodec;
+import com.smartdevicelink.streaming.audio.AudioStreamingParams;
 import com.smartdevicelink.streaming.video.VideoStreamingParameters;
 
 /*
@@ -40,77 +46,97 @@ import com.smartdevicelink.streaming.video.VideoStreamingParameters;
 @SuppressWarnings("unused")
 public interface ISdl {
 
-    /**
-     * Starts the connection with the module
-     */
-    void start();
+	/**
+	 * Starts the connection with the module
+	 */
+	void start();
 
-    /**
-     * Ends connection with the module
-     */
-    void stop();
+	/**
+	 * Ends connection with the module
+	 */
+	void stop();
 
-    /**
-     * Method to check if the session is connected
-     * @return if there is a connected session
-     */
-    boolean isConnected();
+	/**
+	 * Method to check if the session is connected
+	 * @return if there is a connected session
+	 */
+	boolean isConnected();
 
-    /**
-     * Add a service listener for a specific service type
-     * @param serviceType service type that the listener will be attached to
-     * @param sdlServiceListener listener for events that happen to the service
-     */
-    void addServiceListener(SessionType serviceType, ISdlServiceListener sdlServiceListener);
+	/**
+	 * Add a service listener for a specific service type
+	 * @param serviceType service type that the listener will be attached to
+	 * @param sdlServiceListener listener for events that happen to the service
+	 */
+	void addServiceListener(SessionType serviceType, ISdlServiceListener sdlServiceListener);
 
-    /**
-     * Remote a service listener for a specific service type
-     * @param serviceType service type that the listener was attached to
-     * @param sdlServiceListener service listener that was previously added for the service type
-     */
-    void removeServiceListener(SessionType serviceType, ISdlServiceListener sdlServiceListener);
+	/**
+	 * Remote a service listener for a specific service type
+	 * @param serviceType service type that the listener was attached to
+	 * @param sdlServiceListener service listener that was previously added for the service type
+	 */
+	void removeServiceListener(SessionType serviceType, ISdlServiceListener sdlServiceListener);
 
-    /**
-     * Starts the video streaming service
-     * @param parameters desired video streaming params for this sevice to be started with
-     * @param encrypted flag to start this service with encryption or not
-     */
-    void startVideoService(VideoStreamingParameters parameters, boolean encrypted);
+	/**
+	 * Starts the video streaming service
+	 * @param parameters desired video streaming params for this sevice to be started with
+	 * @param encrypted flag to start this service with encryption or not
+	 */
+	@Deprecated
+	void startVideoService(VideoStreamingParameters parameters, boolean encrypted);
 
-    /**
-     * Stops the video service if open
-     */
-    void stopVideoService();
+	/**
+	 * Starts the video streaming service
+	 * @param isEncrypted flag to start this service with encryption or not
+	 * @param parameters desired video streaming params for this sevice to be started with
+	 */
+	IVideoStreamListener startVideoStream(boolean isEncrypted, VideoStreamingParameters parameters);
 
-    /**
-     * Starts the Audio streaming service
-     * @param encrypted flag to start this service with encryption or not
-     */
-    void startAudioService(boolean encrypted);
+	/**
+	 * Stops the video service if open
+	 */
+	void stopVideoService();
 
-    /**
-     * Stops the audio service if open
-     */
-    void stopAudioService();
+	/**
+	 * Starts the Audio streaming service
+	 * @param encrypted flag to start this service with encryption or not
+	 */
+	void startAudioService(boolean encrypted, AudioStreamingCodec codec,
+						   AudioStreamingParams params);
 
-    /**
-     * Pass an RPC message through the proxy to be sent to the connected module
-     * @param message RPCRequest that should be sent to the module
-     */
-    void sendRPCRequest(RPCRequest message);
+	IAudioStreamListener startAudioStream(boolean isEncrypted, AudioStreamingCodec codec,
+										  AudioStreamingParams params);
 
-    /**
-     * Add an OnRPCNotificationListener for specified notification
-     * @param notificationId FunctionID of the notification that is to be listened for
-     * @param listener listener that should be added for the notification ID
-     */
-    void addOnRPCNotificationListener(FunctionID notificationId, OnRPCNotificationListener listener);
+	/**
+	 * Stops the audio service if open
+	 */
+	void stopAudioService();
 
-    /**
-     * Removes an OnRPCNotificationListener for specified notification
-     * @param notificationId FunctionID of the notification that was to be listened for
-     * @param listener listener that was previously added for the notification ID
-     */
-    boolean removeOnRPCNotificationListener(FunctionID notificationId, OnRPCNotificationListener listener);
+	/**
+	 * Pass an RPC message through the proxy to be sent to the connected module
+	 * @param message RPCRequest that should be sent to the module
+	 */
+	void sendRPCRequest(RPCRequest message);
 
+	/**
+	 * Add an OnRPCNotificationListener for specified notification
+	 * @param notificationId FunctionID of the notification that is to be listened for
+	 * @param listener listener that should be added for the notification ID
+	 */
+	void addOnRPCNotificationListener(FunctionID notificationId, OnRPCNotificationListener listener);
+
+	/**
+	 * Removes an OnRPCNotificationListener for specified notification
+	 * @param notificationId FunctionID of the notification that was to be listened for
+	 * @param listener listener that was previously added for the notification ID
+	 */
+	boolean removeOnRPCNotificationListener(FunctionID notificationId, OnRPCNotificationListener listener);
+
+
+	Object getCapability(SystemCapabilityType systemCapabilityType);
+
+	void getCapability(SystemCapabilityType systemCapabilityType, OnSystemCapabilityListener scListener);
+
+	boolean isCapabilitySupported(SystemCapabilityType systemCapabilityType);
+
+	SdlMsgVersion getSdlMsgVersion();
 }
