@@ -20,10 +20,6 @@ public class SdlFile extends RPCStruct {
 
 	public SdlFile() {}
 
-	public SdlFile(Hashtable<String, Object> hash) {
-		super(hash);
-	}
-
 	/**
 	 * Set the file name for the file to be uploaded. This parameter is required
 	 * @param fileName - the name of the file
@@ -85,6 +81,5 @@ public class SdlFile extends RPCStruct {
 	 * @return - A Boolean of whether the file should persist on disk between car ignition cycles.
 	 */
 	public Boolean getPersistentFile() { return getBoolean(KEY_PERSISTENT_FILE); }
-
 
 }

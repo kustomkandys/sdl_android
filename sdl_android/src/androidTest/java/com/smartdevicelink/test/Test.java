@@ -125,6 +125,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -141,7 +142,9 @@ public class Test {
 	public static final String JSON_FAIL = "Json testing failed.";
 	
 	// RPC Request/Response/Notification/Datatype Test Values
+	public static final byte[]                         GENERAL_BYTE_ARRAY                     = new byte[] {0x00, 0x00, 0x00, 0x01};
 	public static final int                            GENERAL_INT                            = 100;
+	public static final URI                            GENERAL_URI                            = URI.create("http://smartdevicelink.com");
 	public static final Integer                        GENERAL_INTEGER                        = 100;
 	public static final Long                           GENERAL_LONG                           = 100L;
 	public static final Turn                           GENERAL_TURN                           = new Turn();
