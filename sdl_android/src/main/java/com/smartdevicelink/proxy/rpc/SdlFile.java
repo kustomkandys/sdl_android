@@ -6,7 +6,6 @@ import com.smartdevicelink.proxy.RPCStruct;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 
 import java.net.URI;
-import java.util.Hashtable;
 
 /**
  * An object that contains all of the necessary information to upload a file to a head unit.
