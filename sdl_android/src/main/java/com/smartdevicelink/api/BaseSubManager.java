@@ -1,6 +1,7 @@
 package com.smartdevicelink.api;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.smartdevicelink.proxy.interfaces.ISdl;
 
@@ -20,6 +21,7 @@ public abstract class BaseSubManager {
 		SETTING_UP,
 		READY,
 		SHUTDOWN,
+		ERROR,
 		;
 	}
 
@@ -39,6 +41,7 @@ public abstract class BaseSubManager {
 	}
 
 	protected void transitionToState(ManagerState state) {
+		Log.i("SUBMANAGER", "TRANSITION TO: "+ state.toString());
 		this.state = state;
 	}
 
