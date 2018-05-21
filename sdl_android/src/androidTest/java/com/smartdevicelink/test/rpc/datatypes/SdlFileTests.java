@@ -51,9 +51,10 @@ public class SdlFileTests extends TestCase {
 
 		assertNull(Test.NULL, msg.getSdlFileName());
 		assertNull(Test.NULL, msg.getFileData());
-		assertNull(Test.NULL, msg.getFilePath());
 		assertNull(Test.NULL, msg.getFileType());
 		assertNull(Test.NULL, msg.getPersistentFile());
+		// primitive will be 0, not null
+		assertEquals(0,msg.getFilePath());
 	}
 
 }
