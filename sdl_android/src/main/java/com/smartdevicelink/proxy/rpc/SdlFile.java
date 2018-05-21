@@ -3,6 +3,7 @@ package com.smartdevicelink.proxy.rpc;
 import android.support.annotation.NonNull;
 
 import com.smartdevicelink.api.FileManager;
+import com.smartdevicelink.api.SdlManager;
 import com.smartdevicelink.proxy.RPCStruct;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 
@@ -21,7 +22,7 @@ public class SdlFile extends RPCStruct {
 	/**
 	 * Set the file name for the file to be uploaded. This parameter is required <br>
 	 * <strong>If a file being uploaded has the same name as an already uploaded file, the new file will overwrite the previous file.</strong>
-	 * Easily check for uploaded files with {@link FileManager#getRemoteFileNames()}
+	 * Easily check for uploaded files with SdlManager.getFileManager().getRemoteFileNames()
 	 * @param fileName - the name of the file
 	 */
 	public void setSdlFileName(@NonNull String fileName) {

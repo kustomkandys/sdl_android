@@ -21,7 +21,7 @@ public class SdlFileTests extends TestCase {
 
 		msg.setSdlFileName(Test.GENERAL_STRING);
 		msg.setFileData(Test.GENERAL_BYTE_ARRAY);
-		msg.setFilePath(Test.GENERAL_URI);
+		msg.setFilePath(Test.GENERAL_INT);
 		msg.setFileType(Test.GENERAL_FILETYPE);
 		msg.setPersistentFile(Test.GENERAL_BOOLEAN);
 	}
@@ -33,14 +33,14 @@ public class SdlFileTests extends TestCase {
 		// Test Values
 		String fileName = msg.getSdlFileName();
 		byte[] data = msg.getFileData();
-		URI uri = msg.getFilePath();
+		int uri = msg.getFilePath();
 		FileType fileType = msg.getFileType();
 		Boolean persistent = msg.getPersistentFile();
 
 		// Valid Tests
 		assertEquals(Test.MATCH, Test.GENERAL_STRING, fileName);
 		assertEquals(Test.MATCH, Test.GENERAL_BYTE_ARRAY, data);
-		assertEquals(Test.MATCH, Test.GENERAL_URI, uri);
+		assertEquals(Test.MATCH, Test.GENERAL_INT, uri);
 		assertEquals(Test.MATCH, Test.GENERAL_FILETYPE, fileType);
 		// Test.GENERAL_BOOLEAN == true
 		assertTrue(persistent);
