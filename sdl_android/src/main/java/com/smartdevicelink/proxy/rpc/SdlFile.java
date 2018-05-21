@@ -58,11 +58,10 @@ public class SdlFile extends RPCStruct {
 	public byte[] getFileData() { return (byte[]) getValue(KEY_FILE_DATA); }
 
 	/**
-	 * Set the file type of the file being uploaded. If not set, we will check to
-	 * make sure it is one of the {@link FileType} types and set it for you.
+	 * Set the file type of the file being uploaded.
 	 * @param fileType - the {@link FileType} of the file being uploaded.
 	 */
-	public void setFileType(FileType fileType) { setValue(KEY_FILE_TYPE, fileType); }
+	public void setFileType(@NonNull FileType fileType) { setValue(KEY_FILE_TYPE, fileType); }
 
 	/**
 	 * @return - the {@link FileType} - of the uploaded file

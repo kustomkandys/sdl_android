@@ -1,8 +1,6 @@
 package com.smartdevicelink.api;
 
-import android.content.ContentResolver;
 import android.content.Context;
-import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -20,7 +18,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +33,7 @@ import java.util.List;
  * 1. Getters <br>
  * 2. Deletion methods <br>
  * 3. Uploading Files / Artwork
+ * 4. Helpers
  */
 public class FileManager extends BaseSubManager {
 
@@ -45,17 +43,21 @@ public class FileManager extends BaseSubManager {
 	private WeakReference<Context> context;
 
 	FileManager(ISdl internalInterface, Context context) {
-
 		// setup
 		super(internalInterface);
 		this.context = new WeakReference<>(context);
-
-		// prepare manager - dont set state to ready until we have list of files
+		// prepare manager - don't set state to ready until we have list of files
 		retrieveRemoteFiles();
 	}
 
 	// GETTERS
 
+	/**
+	 * A synchronous call to get the list of files currently on the head unit
+	 * The manager must be in the READY state for this to work, otherwise it will
+	 * return null
+	 * @return - a List of file names
+	 */
 	public List<String> getRemoteFileNames() {
 		if (state != ManagerState.READY){
 			// error and don't return list
@@ -65,6 +67,10 @@ public class FileManager extends BaseSubManager {
 		return remoteFiles;
 	}
 
+	/**
+	 * This is an asynchronous call to the head unit to get all remote files.
+	 * It is instantiated with the manager, and executes in the
+	 */
 	private void retrieveRemoteFiles(){
 		// hold list in remoteFiles class var
 		ListFiles listFiles = new ListFiles();
@@ -91,6 +97,11 @@ public class FileManager extends BaseSubManager {
 
 	// DELETION
 
+	/**
+	 * Delete a file on the head unit
+	 * @param fileName - The name of the file to be deleted
+	 * @param listener - a completion listener to see if the request was successful or not
+	 */
 	public void deleteRemoteFileWithName(@NonNull final String fileName, final CompletionListener listener){
 		DeleteFile deleteFileRequest = new DeleteFile();
 		deleteFileRequest.setSdlFileName(fileName);
@@ -99,14 +110,10 @@ public class FileManager extends BaseSubManager {
 			public void onResponse(int correlationId, RPCResponse response) {
 				if(response.getSuccess()){
 					Log.i(TAG, "file named: "+ fileName + " deleted");
-					if (listener != null) {
-						listener.onComplete(true);
-					}
+					sendListenerResponse(listener,true);
 				}else{
 					Log.e(TAG, "Unable to delete file named: "+ fileName);
-					if (listener != null) {
-						listener.onComplete(false);
-					}
+					sendListenerResponse(listener,false);
 				}
 			}
 		});
@@ -114,6 +121,11 @@ public class FileManager extends BaseSubManager {
 		this.internalInterface.sendRPCRequest(deleteFileRequest);
 	}
 
+	/**
+	 * Delete a multiple files on the head unit
+	 * @param fileNames - a List of names of files to be deleted on the head unit
+	 * @param listener - a completion listener to see if the request was successful or not
+	 */
 	public void deleteRemoteFilesWithNames(@NonNull ArrayList<String> fileNames, CompletionListener listener){
 		if (fileNames.size() > 0){
 			for (String filename : fileNames){
@@ -121,18 +133,23 @@ public class FileManager extends BaseSubManager {
 			}
 			if (listener != null) {
 				Log.i(TAG, "Multiple file deletion success");
-				listener.onComplete(true);
+				sendListenerResponse(listener,true);
 			}
 		}else{
 			Log.e(TAG, "You must send items in your list");
-			listener.onComplete(false);
+			sendListenerResponse(listener,false);
 		}
 
 	}
 
 	// UPLOAD FILES / ARTWORK
 
-	public void uploadFile(@NonNull SdlFile file, CompletionListener listener){
+	/**
+	 * Upload a file to the head unit
+	 * @param file - an SDLFile with at least the required params: fileName and fileType
+	 * @param listener - a completion listener, should you wish to provide one
+	 */
+	public void uploadFile(@NonNull SdlFile file, final CompletionListener listener){
 
 		// DATA HANDLING
 
@@ -146,9 +163,7 @@ public class FileManager extends BaseSubManager {
 			}else{
 				// error no data or path provided
 				Log.e(TAG, "No file path or data provided :/");
-				if (listener != null) {
-					listener.onComplete(false);
-				}
+				sendListenerResponse(listener,false);
 			}
 		}
 
@@ -159,9 +174,7 @@ public class FileManager extends BaseSubManager {
 
 		if (filename == null){
 			Log.e(TAG, "We shouldn't be here - no file name provided");
-			if (listener != null) {
-				listener.onComplete(false);
-			}
+			sendListenerResponse(listener,false);
 		}
 
 		// persistence
@@ -171,11 +184,19 @@ public class FileManager extends BaseSubManager {
 			persistentFile = false;
 		}
 
+		// file type
+		FileType fileType = file.getFileType();
+
+		if (fileType == null){
+			Log.e(TAG, "We shouldn't be here - no file type provided");
+			sendListenerResponse(listener,false);
+		}
+
 		// PUTFILE RPC
 
 		PutFile putFileRequest = new PutFile();
 		putFileRequest.setSdlFileName(filename);
-		putFileRequest.setFileType(FileType.GRAPHIC_JPEG);
+		putFileRequest.setFileType(fileType);
 		putFileRequest.setPersistentFile(persistentFile);
 		putFileRequest.setFileData(fileData); // can create file_data using helper method below
 		putFileRequest.setOnRPCResponseListener(new OnRPCResponseListener() {
@@ -183,27 +204,47 @@ public class FileManager extends BaseSubManager {
 			@Override
 			public void onResponse(int correlationId, RPCResponse response) {
 				setListenerType(UPDATE_LISTENER_TYPE_PUT_FILE); // necessary for PutFile requests
-
 				if(response.getSuccess()){
-
+					sendListenerResponse(listener, true);
 				}else{
-					Log.i("SdlService", "Unsuccessful app icon upload.");
+					Log.i(TAG, "Unsuccessful file upload.");
+					sendListenerResponse(listener, false);
 				}
 			}
 		});
 	}
 
+	/**
+	 * Upload a multiple files to the head unit
+	 * @param files - an List of SDLFiles with at least the required params: fileName and fileType
+	 * @param listener - a completion listener, should you wish to provide one
+	 */
 	public void uploadFiles(@NonNull ArrayList<SdlFile> files, CompletionListener listener){
-
+		if (files.size() > 0){
+			for (SdlFile file : files){
+				uploadFile(file, null);
+			}
+			if (listener != null) {
+				Log.i(TAG, "Multiple file upload success");
+				sendListenerResponse(listener,true);
+			}
+		}else{
+			Log.e(TAG, "You must send files for this to work");
+			sendListenerResponse(listener,false);
+		}
 	}
 
 	// HELPERS
 
-	public static Uri resourceToUri(Context context, int resID) {
-		return Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" +
-				context.getResources().getResourcePackageName(resID) + '/' +
-				context.getResources().getResourceTypeName(resID) + '/' +
-				context.getResources().getResourceEntryName(resID) );
+	/**
+	 * This just helps keep code clean in here
+	 * @param listener - the listener object, if there is one
+	 * @param success - whether something was successful or not
+	 */
+	private void sendListenerResponse(CompletionListener listener, Boolean success){
+		if (listener != null && success != null){
+			listener.onComplete(success);
+		}
 	}
 
 	/**
@@ -225,9 +266,7 @@ public class FileManager extends BaseSubManager {
 			return os.toByteArray();
 		} catch (IOException e) {
 			Log.w(TAG, "Can't read file", e);
-			if (listener != null){
-				listener.onComplete(false);
-			}
+			sendListenerResponse(listener, false);
 			return null;
 		} finally {
 			if (is != null) {
