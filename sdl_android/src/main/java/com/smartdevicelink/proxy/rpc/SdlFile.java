@@ -1,8 +1,8 @@
 package com.smartdevicelink.proxy.rpc;
 
-import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import com.smartdevicelink.api.FileManager;
 import com.smartdevicelink.proxy.RPCStruct;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 
@@ -19,7 +19,9 @@ public class SdlFile extends RPCStruct {
 	public SdlFile() {}
 
 	/**
-	 * Set the file name for the file to be uploaded. This parameter is required
+	 * Set the file name for the file to be uploaded. This parameter is required <br>
+	 * <strong>If a file being uploaded has the same name as an already uploaded file, the new file will overwrite the previous file.</strong>
+	 * Easily check for uploaded files with {@link FileManager#getRemoteFileNames()}
 	 * @param fileName - the name of the file
 	 */
 	public void setSdlFileName(@NonNull String fileName) {
@@ -70,6 +72,8 @@ public class SdlFile extends RPCStruct {
 
 	/**
 	 * Set whether or not the file should persist on disk between car ignition cycles.
+	 * Persistence should be used for images or files relating to your UI, and not for dynamic aspects, such as Album Artwork.<br>
+	 * <strong>Be aware that persistence will not work if space on the head unit is limited.</strong>
 	 * @param persistentFile - True or False. <strong>If not set, will default to false</strong>
 	 */
 	public void setPersistentFile(Boolean persistentFile) { setValue(KEY_PERSISTENT_FILE, persistentFile); }

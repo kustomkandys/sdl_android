@@ -39,7 +39,6 @@ public class FileManager extends BaseSubManager {
 
 	private static String TAG = "File Manager";
 	private List<String> remoteFiles;
-	private Integer spaceAvailable;
 	private WeakReference<Context> context;
 
 	FileManager(ISdl internalInterface, Context context) {
@@ -50,10 +49,18 @@ public class FileManager extends BaseSubManager {
 		retrieveRemoteFiles();
 	}
 
+	/**
+	 * Add on any additional cleanup here
+	 */
+	public void dispose(){
+		super.dispose();
+		remoteFiles.clear();
+	}
+
 	// GETTERS
 
 	/**
-	 * A synchronous call to get the list of files currently on the head unit
+	 * A synchronous call to get the list of files currently on the head unit.
 	 * The manager must be in the READY state for this to work, otherwise it will
 	 * return null
 	 * @return - a List of file names
@@ -80,14 +87,13 @@ public class FileManager extends BaseSubManager {
 				if(response.getSuccess()){
 					// Parse out useful data
 					remoteFiles = ((ListFilesResponse) response).getFilenames();
-					spaceAvailable = ((ListFilesResponse) response).getSpaceAvailable();
 
 					// on callback set manager to ready state
 					transitionToState(ManagerState.READY);
 
 				}else{
 					// There was a problem with the request, the manager cannot function properly
-					Log.e(TAG, "Failed to request list of uploaded files.");
+					Log.e(TAG, "Failed to request list of uploaded files. Manager in ERROR state");
 					transitionToState(ManagerState.ERROR);
 				}
 			}
@@ -110,6 +116,8 @@ public class FileManager extends BaseSubManager {
 			public void onResponse(int correlationId, RPCResponse response) {
 				if(response.getSuccess()){
 					Log.i(TAG, "file named: "+ fileName + " deleted");
+					// remove the file name from our local list
+					removeFileFromLocalList(fileName);
 					sendListenerResponse(listener,true);
 				}else{
 					Log.e(TAG, "Unable to delete file named: "+ fileName);
@@ -126,10 +134,18 @@ public class FileManager extends BaseSubManager {
 	 * @param fileNames - a List of names of files to be deleted on the head unit
 	 * @param listener - a completion listener to see if the request was successful or not
 	 */
-	public void deleteRemoteFilesWithNames(@NonNull ArrayList<String> fileNames, CompletionListener listener){
+	public void deleteRemoteFilesWithNames(@NonNull ArrayList<String> fileNames, final CompletionListener listener){
 		if (fileNames.size() > 0){
-			for (String filename : fileNames){
-				deleteRemoteFileWithName(filename, null);
+			for (final String filename : fileNames){
+				deleteRemoteFileWithName(filename, new CompletionListener() {
+					@Override
+					public void onComplete(boolean success) {
+						if (!success){
+							Log.e(TAG, "There was an error deleting: "+ filename);
+							sendListenerResponse(listener,false);
+						}
+					}
+				});
 			}
 			if (listener != null) {
 				Log.i(TAG, "Multiple file deletion success");
@@ -164,17 +180,19 @@ public class FileManager extends BaseSubManager {
 				// error no data or path provided
 				Log.e(TAG, "No file path or data provided :/");
 				sendListenerResponse(listener,false);
+				return;
 			}
 		}
 
-		// CHECKING OTHER PARAMS
+		// CHECKING OTHER PARAMS BEFORE OUR REQUEST
 
 		// file name
-		String filename = file.getSdlFileName();
+		final String filename = file.getSdlFileName();
 
 		if (filename == null){
 			Log.e(TAG, "We shouldn't be here - no file name provided");
 			sendListenerResponse(listener,false);
+			return;
 		}
 
 		// persistence
@@ -190,6 +208,7 @@ public class FileManager extends BaseSubManager {
 		if (fileType == null){
 			Log.e(TAG, "We shouldn't be here - no file type provided");
 			sendListenerResponse(listener,false);
+			return;
 		}
 
 		// PUTFILE RPC
@@ -205,6 +224,8 @@ public class FileManager extends BaseSubManager {
 			public void onResponse(int correlationId, RPCResponse response) {
 				setListenerType(UPDATE_LISTENER_TYPE_PUT_FILE); // necessary for PutFile requests
 				if(response.getSuccess()){
+					// add file name to our list of remote files
+					addFileToLocalList(filename);
 					sendListenerResponse(listener, true);
 				}else{
 					Log.i(TAG, "Unsuccessful file upload.");
@@ -219,10 +240,18 @@ public class FileManager extends BaseSubManager {
 	 * @param files - an List of SDLFiles with at least the required params: fileName and fileType
 	 * @param listener - a completion listener, should you wish to provide one
 	 */
-	public void uploadFiles(@NonNull ArrayList<SdlFile> files, CompletionListener listener){
+	public void uploadFiles(@NonNull ArrayList<SdlFile> files, final CompletionListener listener){
 		if (files.size() > 0){
-			for (SdlFile file : files){
-				uploadFile(file, null);
+			for (final SdlFile file : files){
+				uploadFile(file, new CompletionListener() {
+					@Override
+					public void onComplete(boolean success) {
+						if (!success){
+							Log.e(TAG, "There was an error uploading a file");
+							sendListenerResponse(listener, false);
+						}
+					}
+				});
 			}
 			if (listener != null) {
 				Log.i(TAG, "Multiple file upload success");
@@ -235,6 +264,26 @@ public class FileManager extends BaseSubManager {
 	}
 
 	// HELPERS
+
+	/**
+	 * adds a file name to our local list of remote files after a successful upload
+	 * @param fileName - the name of the file to add to our list
+	 */
+	private void addFileToLocalList(String fileName){
+		if (remoteFiles != null){
+			remoteFiles.add(fileName);
+		}
+	}
+
+	/**
+	 * removes a file name to our local list of remote files after a successful deletion
+	 * @param fileName - the name of the file to add to our list
+	 */
+	private void removeFileFromLocalList(String fileName){
+		if (remoteFiles != null && remoteFiles.contains(fileName)){
+			remoteFiles.remove(fileName);
+		}
+	}
 
 	/**
 	 * This just helps keep code clean in here
