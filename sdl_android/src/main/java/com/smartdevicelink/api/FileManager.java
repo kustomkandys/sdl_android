@@ -134,25 +134,50 @@ public class FileManager extends BaseSubManager {
 
 	public void uploadFile(@NonNull SdlFile file, CompletionListener listener){
 
+		// DATA HANDLING
+
+		// We need to see whether file data OR a file path was sent,
+		// as they are both 'optional' - but one is needed for this to work.
 		byte[] fileData = file.getFileData();
 		if (fileData == null){
-			URI path = file.getFilePath();
-			if (path != null){
-				fileData = readBytes(path);
+			int resource = file.getFilePath();
+			if (resource != 0){
+				fileData = contentsOfResource(resource, listener);
 			}else{
 				// error no data or path provided
-				Log.e(TAG, "No file path or data provided");
+				Log.e(TAG, "No file path or data provided :/");
 				if (listener != null) {
 					listener.onComplete(false);
 				}
 			}
 		}
 
+		// CHECKING OTHER PARAMS
+
+		// file name
+		String filename = file.getSdlFileName();
+
+		if (filename == null){
+			Log.e(TAG, "We shouldn't be here - no file name provided");
+			if (listener != null) {
+				listener.onComplete(false);
+			}
+		}
+
+		// persistence
+		Boolean persistentFile = file.getPersistentFile();
+
+		if (persistentFile == null){
+			persistentFile = false;
+		}
+
+		// PUTFILE RPC
+
 		PutFile putFileRequest = new PutFile();
-		putFileRequest.setSdlFileName("appIcon.jpeg");
+		putFileRequest.setSdlFileName(filename);
 		putFileRequest.setFileType(FileType.GRAPHIC_JPEG);
-		putFileRequest.setPersistentFile(true);
-		putFileRequest.setFileData(file_data); // can create file_data using helper method below
+		putFileRequest.setPersistentFile(persistentFile);
+		putFileRequest.setFileData(fileData); // can create file_data using helper method below
 		putFileRequest.setOnRPCResponseListener(new OnRPCResponseListener() {
 
 			@Override
@@ -181,22 +206,37 @@ public class FileManager extends BaseSubManager {
 				context.getResources().getResourceEntryName(resID) );
 	}
 
-	public byte[] readBytes(URI uri) throws IOException {
-		// this dynamically extends to take the bytes you read
-		InputStream inputStream = context.get().getContentResolver().openInputStream(uri);
-		ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
-
-		// this is storage overwritten on each iteration with bytes
-		int bufferSize = 4096;
-		byte[] buffer = new byte[bufferSize];
-
-		// we need to know how may bytes were read to write them to the byteBuffer
-		int len = 0;
-		while ((len = inputStream.read(buffer)) != -1) {
-			byteBuffer.write(buffer, 0, len);
+	/**
+	 * Helper method to take resource files and turn them into byte arrays
+	 * @param resource Resource file id.
+	 * @return Resulting byte array.
+	 */
+	private byte[] contentsOfResource(int resource, CompletionListener listener) {
+		InputStream is = null;
+		try {
+			is = context.get().getResources().openRawResource(resource);
+			ByteArrayOutputStream os = new ByteArrayOutputStream(is.available());
+			final int bufferSize = 4096;
+			final byte[] buffer = new byte[bufferSize];
+			int available;
+			while ((available = is.read(buffer)) >= 0) {
+				os.write(buffer, 0, available);
+			}
+			return os.toByteArray();
+		} catch (IOException e) {
+			Log.w(TAG, "Can't read file", e);
+			if (listener != null){
+				listener.onComplete(false);
+			}
+			return null;
+		} finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
-
-		// and then we can return your byte array.
-		return byteBuffer.toByteArray();
 	}
 }

@@ -1,11 +1,10 @@
 package com.smartdevicelink.proxy.rpc;
 
+import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import com.smartdevicelink.proxy.RPCStruct;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
-
-import java.net.URI;
 
 /**
  * An object that contains all of the necessary information to upload a file to a head unit.
@@ -35,16 +34,16 @@ public class SdlFile extends RPCStruct {
 	}
 
 	/**
-	 * Set the file path for the file to be uploaded. This parameter is optional.
+	 * Set the resource ID of the file you want to upload
 	 * If this parameter is set, you do not need to set the file data.
-	 * @param filePath - the URI of the file to be uploaded.
+	 * @param resource - the URI of the file to be uploaded.
 	 */
-	public void setFilePath(URI filePath) { setValue(KEY_FILE_PATH, filePath); }
+	public void setFilePath(int resource) { setValue(KEY_FILE_PATH, resource); }
 
 	/**
-	 * @return - The URI of the file
+	 * @return - The resource ID of the file
 	 */
-	public URI getFilePath() { return (URI) getValue(KEY_FILE_PATH); }
+	public int getFilePath() { return (int) getValue(KEY_FILE_PATH); }
 
 	/**
 	 * Set the file data as a byte array. If this is set, there is no need to set the
@@ -72,7 +71,7 @@ public class SdlFile extends RPCStruct {
 
 	/**
 	 * Set whether or not the file should persist on disk between car ignition cycles.
-	 * @param persistentFile - True or False
+	 * @param persistentFile - True or False. <strong>If not set, will default to false</strong>
 	 */
 	public void setPersistentFile(Boolean persistentFile) { setValue(KEY_PERSISTENT_FILE, persistentFile); }
 
